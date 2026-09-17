@@ -1,3 +1,27 @@
+const { initializeApp, cert } = require("firebase-admin/app");
+const { getFirestore } = require("firebase-admin/firestore");
+
+const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
+  ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)
+  : require("./firebase-service-account.json");
+
+initializeApp({
+  credential: cert(serviceAccount)
+});
+
+const db = getFirestore();
+
+
+
+
+
+
+
+
+
+
+
+
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -7,11 +31,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const DATA_DIR = path.join(__dirname, "data");
-const USERS_FILE = path.join(DATA_DIR, "users.json");
 const SESSIONS_FILE = path.join(DATA_DIR, "sessions.json");
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, "[]");
+
 if (!fs.existsSync(SESSIONS_FILE)) fs.writeFileSync(SESSIONS_FILE, "[]");
 
 app.use(express.json());
@@ -39,27 +62,40 @@ function getToken(req) {
   const h = req.headers.authorization || "";
   return h.startsWith("Bearer ") ? h.slice(7) : null;
 }
-function auth(req, res, next) {
+async function auth(req, res, next) {
   const token = getToken(req);
   const sessions = readJSON(SESSIONS_FILE);
   const session = sessions.find(s => s.token === token);
   if (!session) return res.status(401).json({ error: "Please log in." });
-  const users = readJSON(USERS_FILE);
-  const user = users.find(u => u.id === session.userId);
-  if (!user) return res.status(401).json({ error: "Account not found." });
+  const userDoc = await db.collection("users").doc(session.userId).get();
+
+  if (!userDoc.exists) {
+   return res.status(401).json({ error: "Account not found." });
+}
+
+const user = userDoc.data();
   req.user = user;
   req.token = token;
   next();
 }
 
-app.post("/api/register", (req, res) => {
+app.post("/api/register", async (req, res) => {
   const { name, email, password, location, state, district, latitude, longitude } = req.body;
   if (!name || !email || !password) return res.status(400).json({ error: "Name, email and password are required." });
   if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters." });
 
-  const users = readJSON(USERS_FILE);
-  const cleanEmail = email.trim().toLowerCase();
-  if (users.some(u => u.email === cleanEmail)) return res.status(409).json({ error: "An account with this email already exists." });
+ 
+const cleanEmail = email.trim().toLowerCase();
+
+const existingUserSnapshot = await db
+  .collection("users")
+  .where("email", "==", cleanEmail)
+  .limit(1)
+  .get();
+
+if (!existingUserSnapshot.empty) {
+  return res.status(409).json({ error: "An account with this email already exists." });
+}
 
   const { salt, hash } = hashPassword(password);
   const user = {
@@ -75,8 +111,8 @@ app.post("/api/register", (req, res) => {
     longitude: Number.isFinite(Number(longitude)) ? Number(longitude) : null,
     createdAt: new Date().toISOString()
   };
-  users.push(user);
-  writeJSON(USERS_FILE, users);
+  await db.collection("users").doc(user.id).set(user);
+
 
   const token = newToken();
   const sessions = readJSON(SESSIONS_FILE);
@@ -86,10 +122,17 @@ app.post("/api/register", (req, res) => {
   res.json({ token, user: publicUser(user) });
 });
 
-app.post("/api/login", (req, res) => {
+ app.post("/api/login",async (req, res) =>  {
   const { email, password } = req.body;
-  const users = readJSON(USERS_FILE);
-  const user = users.find(u => u.email === String(email || "").trim().toLowerCase());
+ const cleanEmail = String(email || "").trim().toLowerCase();
+
+const snapshot = await db
+  .collection("users")
+  .where("email", "==", cleanEmail)
+  .limit(1)
+  .get();
+
+const user = snapshot.empty ? null : snapshot.docs[0].data();
   if (!user || !verifyPassword(String(password || ""), user.passwordHash, user.passwordSalt)) {
     return res.status(401).json({ error: "Incorrect email or password." });
   }
@@ -111,11 +154,14 @@ app.get("/api/me", auth, (req, res) => {
   res.json({ user: publicUser(req.user) });
 });
 
-app.put("/api/profile", auth, (req, res) => {
-  const users = readJSON(USERS_FILE);
-  const user = users.find(u => u.id === req.user.id);
-  if (!user) return res.status(404).json({ error: "User not found." });
+app.put("/api/profile", auth,  async (req, res) => {
+  const userDoc = await db.collection("users").doc(req.user.id).get();
 
+if (!userDoc.exists) {
+  return res.status(404).json({ error: "User not found." });
+}
+
+const user = userDoc.data();
   if (req.body.name) user.name = String(req.body.name).trim();
   if (req.body.location !== undefined) user.location = String(req.body.location).trim();
   if (req.body.state !== undefined) user.state = String(req.body.state);
@@ -123,8 +169,11 @@ app.put("/api/profile", auth, (req, res) => {
   if (req.body.latitude !== undefined) user.latitude = Number(req.body.latitude);
   if (req.body.longitude !== undefined) user.longitude = Number(req.body.longitude);
 
-  writeJSON(USERS_FILE, users);
-  res.json({ user: publicUser(user) });
+
+
+await db.collection("users").doc(user.id).set(user, { merge: true });
+
+res.json({ user: publicUser(user) });
 });
 
 function publicUser(u) {
