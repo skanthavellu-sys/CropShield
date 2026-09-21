@@ -73,12 +73,14 @@ function navigate(page){document.querySelectorAll(".page").forEach(p=>p.classLis
 document.querySelectorAll(".nav-btn").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.page)));
 document.querySelectorAll("[data-page-jump]").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.pageJump)));
 
-function droughtProbability(actual,crop){const ref=crop30DayReference[crop]||170;const ratio=actual/ref;if(ratio<=0.45)return 0.90;if(ratio<=0.55)return 0.75;if(ratio<=0.70)return 0.55;if(ratio<=0.85)return 0.35;if(ratio<=1.00)return 0.15;return 0.05}
+function droughtProbability(actual,crop,customRef){const ref=crop30DayReference[crop]||customRef||170;const ratio=actual/ref;if(ratio<=0.45)return 0.90;if(ratio<=0.55)return 0.75;if(ratio<=0.70)return 0.55;if(ratio<=0.85)return 0.35;if(ratio<=1.00)return 0.15;return 0.05}
 function riskFromRain(actual,crop){const p=droughtProbability(actual,crop);if(p>=0.70)return{level:"High",signal:"High drought probability",probability:p};if(p>=0.35)return{level:"Medium",signal:"Moderate drought probability",probability:p};return{level:"Low",signal:"Low drought probability",probability:p}}
 async function fetchRainfall(lat,lon){const d=await api(`/api/rainfall?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`);latestRainfall=d;return d}
 function updateDashboard(data,crop="Padi"){$("dashActual").textContent=data.historical.totalMm.toFixed(1)+" mm";$("dashForecast").textContent=data.forecast.totalMm.toFixed(1)+" mm";const r=riskFromRain(data.historical.totalMm,crop);$("dashRisk").textContent=r.level;$("dashRiskText").textContent=r.signal;$("dashHistory").textContent=data.historical.totalMm.toFixed(1)+" mm";$("dashProgress").style.width=Math.min(100,Math.max(0,data.historical.totalMm/(crop30DayReference[crop]||170)*100))+"%"}
 $("crop").addEventListener("change",()=>{
-  $("otherCropLabel").classList.toggle("hidden",$("crop").value!=="Others");
+  const isOther=$("crop").value==="Others";
+  $("otherCropLabel").classList.toggle("hidden",!isOther);
+  $("otherRainfallLabel").classList.toggle("hidden",!isOther);
 });
 $("calculateBtn").addEventListener("click",async()=>{
   const lat=Number($("lat").value),lon=Number($("lon").value),crop=$("crop").value==="Others"?$("otherCrop").value.trim():$("crop").value,sum=Number($("sumInsured").value);
@@ -87,7 +89,8 @@ $("calculateBtn").addEventListener("click",async()=>{
  if(sum<100) {$("calcLoading").classList.add("hidden");$("calcError").textContent="Check the sum insured amount.";return $("calcError").classList.remove("hidden")}
   try{const d=await fetchRainfall(lat,lon);
     const risk=riskFromRain(d.historical.totalMm,crop);
-  const pDrought=droughtProbability(d.historical.totalMm,crop);
+ const customRef=$("crop").value==="Others"?Number($("otherRainfall").value):null;
+const pDrought=droughtProbability(d.historical.totalMm,crop,customRef);
 const insuredAmount=sum;
 const premium=pDrought*insuredAmount*1.20;
     $("premium").textContent=money(premium);$("riskLevel").textContent=risk.level;$("actual30").textContent=d.historical.totalMm.toFixed(1)+" mm";$("forecast7").textContent=d.forecast.totalMm.toFixed(1)+" mm";$("rainSignal").textContent=risk.signal;$("droughtProbability").textContent=(pDrought*100).toFixed(0)+"%";$("lossProbability").textContent="Not used";$("dataSource").textContent="Open-Meteo API";$("calcResult").classList.remove("hidden");updateDashboard(d,crop)}catch(err){$("calcError").textContent=err.message;$("calcError").classList.remove("hidden")}finally{$("calcLoading").classList.add("hidden")}
