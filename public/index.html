@@ -118,15 +118,21 @@
             <label>District<select id="calcDistrict" disabled><option value="">Select district</option></select></label>
             <label>Latitude<input id="lat" type="number" step="any" placeholder="Auto-filled from district"></label>
             <label>Longitude<input id="lon" type="number" step="any" placeholder="Auto-filled from district"></label>
-            <label>Crop<select id="crop">
-              <option value="Padi">Padi (Rice)</option>
-              <option value="Rubber">Rubber</option>
-              <option value="Oil Palm">Oil Palm</option>
-              <option value="Banana">Banana</option>
-              <option value="Chili">Chili</option>
-            </select></label>
+         <label>Crop<select id="crop">
+  <option value="Padi">Padi (Rice)</option>
+  <option value="Rubber">Rubber</option>
+  <option value="Oil Palm">Oil Palm</option>
+  <option value="Banana">Banana</option>
+  <option value="Chili">Chili</option>
+  <option value="Others">Others</option>
+</select></label>
+
+<label id="otherCropLabel" class="hidden">
+  Enter crop name
+  <input id="otherCrop" type="text" placeholder="e.g. Corn">
+</label>
             <label>Sum insured (RM)<input id="sumInsured" type="number" min="100" step="100" value="10000"></label>
-            <label>Coverage<input id="coverage" type="number" min="10" max="100" value="80">%</label>
+            
           </div>
 
           <div class="tip">📍 Select the farmer's actual state and district. CropShield automatically uses that district's coordinates to retrieve location-specific rainfall. You can fine-tune the latitude/longitude if you know the exact farm location.</div>
