@@ -189,6 +189,23 @@
           <div class="form-grid">
             <label>Crop<input id="claimCrop" placeholder="Padi"></label>
             <label>Claim amount (RM)<input id="claimAmount" type="number" min="1" placeholder="2000"></label>
+            <label>Bank Name
+  <input id="bankName" type="text" placeholder="e.g. Maybank" required>
+</label>
+<label>Account Holder Name
+  <input id="accountHolderName" type="text" placeholder="Enter account holder name" required>
+</label>
+<label>Bank Account Number
+  <input
+    id="bankAccountNumber"
+    type="text"
+    inputmode="numeric"
+    pattern="[0-9]+"
+    maxlength="20"
+    placeholder="Enter account number"
+    required
+  >
+</label>
             <label class="wide">Reason<textarea id="claimReason" placeholder="Describe the weather-related crop damage"></textarea></label>
           </div>
           <button id="claimBtn" class="primary">Submit Claim</button>

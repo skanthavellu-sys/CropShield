@@ -367,19 +367,28 @@ app.get("/api/claims", auth, (req, res) => {
 });
 
 app.post("/api/claims", auth, (req, res) => {
-  const { policyId, crop, reason, amount } = req.body;
+  const { policyId, crop, reason, amount, bankName, accountHolderName, bankAccountNumber } = req.body;
+  if (!bankName || !accountHolderName || !bankAccountNumber) {
+  return res.status(400).json({ error: "Bank name, account holder name and bank account number are required." });
+}
+
+if (!/^\d+$/.test(String(bankAccountNumber))) {
+  return res.status(400).json({ error: "Bank account number must contain numbers only." });
+}
   if (!crop || !reason || !amount) return res.status(400).json({ error: "Crop, reason and amount are required." });
 
   const list = claims.get(req.user.id) || [];
-  const claim = {
-    id: "CLM-" + Date.now(),
-    policyId: policyId || "Not issued",
-    crop,
-    reason,
-    amount: Number(amount),
-    status: "Submitted",
-    createdAt: new Date().toISOString()
-  };
+const claim = {
+  id: "CLM-" + Date.now(),
+  policyId: policyId || "Not issued",
+  crop,
+  reason,
+  amount: Number(amount),
+  bankName,
+  accountHolderName,
+  bankAccountNumber,
+  status: "Submitted"
+};
   list.unshift(claim);
   claims.set(req.user.id, list);
   res.json({ claim });
