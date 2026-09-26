@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CropShield | Farmer Insurance</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div id="toast"></div>
+
+  <section id="authPage" class="auth-page">
+    <div class="auth-card">
+      <div class="brand big">🌱 CropShield</div>
+      <p class="muted">Weather-aware crop insurance for Malaysian farmers.</p>
+
+      <div class="tabs">
+        <button class="tab active" data-auth="login">Login</button>
+        <button class="tab" data-auth="register">Create Account</button>
+      </div>
+
+      <form id="loginForm" class="auth-form">
+        <label>Email<input id="loginEmail" type="email" required placeholder="you@example.com"></label>
+        <label>Password<input id="loginPassword" type="password" required placeholder="••••••••"></label>
+        <button class="primary full">Login</button>
+      </form>
+
+      <form id="registerForm" class="auth-form hidden">
+        <label>Full name<input id="regName" required placeholder="Farmer name"></label>
+        <label>Email<input id="regEmail" type="email" required placeholder="you@example.com"></label>
+        <label>Password<input id="regPassword" type="password" minlength="6" required placeholder="At least 6 characters"></label>
+        <label>State<select id="regState" required><option value="">Select state</option></select></label>
+        <label>District<select id="regDistrict" required disabled><option value="">Select district</option></select></label>
+        <label>Farm location<input id="regLocation" placeholder="Optional farm name / area"></label>
+        <button class="primary full">Create account</button>
+      </form>
+
+      <div id="authMessage" class="message"></div>
+      <small class="muted">Prototype for hackathon demonstration. Do not use this as a real insurance contract.</small>
+    </div>
+  </section>
+
+  <section id="appPage" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="brand">🌱 CropShield</div>
+      <div class="side-user">
+        <div class="avatar" id="avatar">F</div>
+        <div>
+          <strong id="sideName">Farmer</strong>
+          <small id="sideLocation">Malaysia</small>
+        </div>
+      </div>
+
+      <nav>
+        <button class="nav-btn active" data-page="dashboard">⌂ <span>Dashboard</span></button>
+        <button class="nav-btn" data-page="calculator">☂ <span>Insurance</span></button>
+        <button class="nav-btn" data-page="policy">▣ <span>My Policy</span></button>
+        <button class="nav-btn" data-page="claims">⚑ <span>Claims</span></button>
+        <button class="nav-btn" data-page="reports">◈ <span>Rainfall Data</span></button>
+        <button class="nav-btn" data-page="profile">⚙ <span>Profile</span></button>
+      </nav>
+
+      <button id="logoutBtn" class="logout">↪ Logout</button>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">FARMER INSURANCE PLATFORM</div>
+          <h1 id="pageTitle">Dashboard</h1>
+        </div>
+        <div class="live-badge"><span></span> Live data enabled</div>
+      </header>
+
+      <div id="page-dashboard" class="page">
+        <div class="hero">
+          <div>
+            <div class="eyebrow">WELCOME BACK</div>
+            <h2>Protect your harvest with data.</h2>
+            <p>Use rainfall data for your selected farm coordinates to estimate weather risk and insurance coverage.</p>
+            <button class="primary" data-page-jump="calculator">Calculate Premium →</button>
+          </div>
+          <div class="hero-icon">🌾</div>
+        </div>
+
+        <div class="stats">
+          <div class="stat-card"><span>30-Day Actual Rainfall</span><strong id="dashActual">—</strong><small>API historical data</small></div>
+          <div class="stat-card"><span>Next 7 Days</span><strong id="dashForecast">—</strong><small>API forecast</small></div>
+          <div class="stat-card"><span>Rainfall Status</span><strong id="dashRisk">—</strong><small id="dashRiskText">Enter coordinates</small></div>
+          <div class="stat-card"><span>Policy Status</span><strong id="dashPolicy">No Policy</strong><small>Prototype</small></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-head"><h3>Rainfall Snapshot</h3><button class="text-btn" data-page-jump="reports">View data</button></div>
+            <div class="rain-row"><span>Last 30 days</span><strong id="dashHistory">—</strong></div>
+            <div class="progress"><div id="dashProgress" style="width:0%"></div></div>
+            <p class="muted small">This is calculated from daily precipitation values returned by the weather API.</p>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>How it works</h3></div>
+            <ol class="steps">
+              <li>Create your farmer account.</li>
+              <li>Enter your farm coordinates.</li>
+              <li>Select crop and sum insured.</li>
+              <li>CropShield retrieves rainfall data automatically.</li>
+              <li>Premium and risk indicators are calculated.</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-calculator" class="page hidden">
+        <div class="panel">
+          <div class="panel-head"><h3>Insurance Calculator</h3><span class="pill">Real rainfall API</span></div>
+          <div class="form-grid">
+            <label>State<select id="calcState"><option value="">Select state</option></select></label>
+            <label>District<select id="calcDistrict" disabled><option value="">Select district</option></select></label>
+            <label>Latitude<input id="lat" type="number" step="any" placeholder="Auto-filled from district"></label>
+            <label>Longitude<input id="lon" type="number" step="any" placeholder="Auto-filled from district"></label>
+         <label>Crop<select id="crop">
+  <option value="Padi">Padi (Rice)</option>
+  <option value="Rubber">Rubber</option>
+  <option value="Oil Palm">Oil Palm</option>
+  <option value="Banana">Banana</option>
+  <option value="Chili">Chili</option>
+  <option value="Others">Others</option>
+</select></label>
+
+<label id="otherCropLabel" class="hidden">
+  Enter crop name
+  <input id="otherCrop" type="text" placeholder="e.g. Corn">
+</label>
+
+<label id="otherRainfallLabel" class="hidden">
+  Crop rainfall requirement (mm)
+  <input id="otherRainfall" type="number" min="1" step="1" placeholder="e.g. 180">
+</label>
+            <label>Sum insured (RM)<input id="sumInsured" type="number" min="100" step="100" value="10000"></label>
+            
+          </div>
+
+          <div class="tip">📍 Select the farmer's actual state and district. CropShield automatically uses that district's coordinates to retrieve location-specific rainfall. You can fine-tune the latitude/longitude if you know the exact farm location.</div>
+
+          <button id="calculateBtn" class="primary">Get Live Rainfall & Calculate</button>
+          <div id="calcLoading" class="loading hidden">Retrieving rainfall data…</div>
+          <div id="calcError" class="error hidden"></div>
+
+          <div id="calcResult" class="result-card hidden">
+            <div class="result-top">
+              <div><span class="muted">Estimated premium</span><strong id="premium">RM 0.00</strong></div>
+              <div><span class="muted">Risk level</span><strong id="riskLevel">—</strong></div>
+            </div>
+            <div class="result-grid">
+              <div><span>30-day actual rainfall</span><strong id="actual30">—</strong></div>
+              <div><span>Next 7-day forecast</span><strong id="forecast7">—</strong></div>
+              <div><span>Rainfall signal</span><strong id="rainSignal">—</strong></div>
+              <div><span>P(R &lt; 0.7E) — drought</span><strong id="droughtProbability">—</strong></div>
+              <div><span>P(R &gt; 1.3E) — excess</span><strong id="lossProbability">—</strong></div>
+              <div><span>Data source</span><strong id="dataSource">—</strong></div>
+            </div>
+            <div class="formula-note">Premium = Sum Insured × [P(R &lt; 0.7E) + P(R &gt; 1.3E)] × 1.20</div>
+            <button id="purchaseBtn" class="primary">Purchase Insurance</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-policy" class="page hidden">
+        <div class="panel">
+          <div class="panel-head"><h3>My Policy</h3><span id="policyStatusPill" class="pill">No active policy</span></div>
+          <div id="policyEmpty" class="empty">No insurance policy has been purchased yet.</div>
+          <div id="policyContent" class="hidden">
+            <div class="purchase-success">
+              <div class="success-icon">✓</div>
+              <div><strong>Insurance Purchased Successfully</strong><span>Your CropShield policy is active.</span></div>
+            </div>
+            <div class="policy-card">
+              <div><small>Policy ID</small><strong id="policyId">CS-—</strong></div>
+              <div><small>Status</small><strong id="policyStatus">Active</strong></div>
+              <div><small>Crop</small><strong id="policyCrop">—</strong></div>
+              <div><small>Sum insured</small><strong id="policySum">—</strong></div>
+              <div><small>Premium</small><strong id="policyPremium">—</strong></div>
+              <div><small>Purchased</small><strong id="policyPurchased">—</strong></div>
+              <div><small>Coverage period</small><strong id="policyPeriod">—</strong></div>
+              <div><small>30-day rainfall</small><strong id="policyRain">—</strong></div>
+              <div><small>P(R &lt; 0.7E)</small><strong id="policyDrought">—</strong></div>
+              <div><small>P(R &gt; 1.3E)</small><strong id="policyLoss">—</strong></div>
+            </div>
+            <div class="panel-head expected-head"><h3>Expected Rainfall — 9 Months</h3><span class="pill">Prototype schedule</span></div>
+            <div id="expectedRainfallList" class="expected-rainfall-grid"></div>
+            <p class="muted">Expected monthly rainfall values use the selected crop's 30-day reference as a prototype assumption. This is for the hackathon demonstration, not an official actuarial schedule.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-claims" class="page hidden">
+        <div class="panel">
+          <div class="panel-head"><h3>Submit a Claim</h3><span class="pill">Weather trigger</span></div>
+          <div class="sensor-card">
+            <div class="sensor-icon">🌧️</div>
+            <div><small>Rain Detection Sensor</small><strong id="sensorRainfall">0 mm</strong><span>Current simulated sensor reading</span></div>
+            <div class="sensor-status" id="sensorStatus">Monitoring</div>
+          </div>
+          <div id="claimEligibility" class="claim-eligibility">Purchase an active policy before submitting a claim.</div>
+          <div class="form-grid">
+            <label>Crop<input id="claimCrop" placeholder="Padi"></label>
+            <label>Claim amount (RM)<input id="claimAmount" type="number" min="1" placeholder="2000"></label>
+            <label>Bank Name
+  <input id="bankName" type="text" placeholder="e.g. Maybank" required>
+</label>
+<label>Account Holder Name
+  <input id="accountHolderName" type="text" placeholder="Enter account holder name" required>
+</label>
+<label>Bank Account Number
+  <input
+    id="bankAccountNumber"
+    type="text"
+    inputmode="numeric"
+    pattern="[0-9]+"
+    maxlength="20"
+    placeholder="Enter account number"
+    required
+  >
+</label>
+            <label class="wide">Reason<textarea id="claimReason" placeholder="Describe the weather-related crop damage"></textarea></label>
+          </div>
+          <button id="claimBtn" class="primary">Submit Claim</button>
+          <div id="claimsList" class="claim-list"></div>
+        </div>
+      </div>
+
+      <div id="page-reports" class="page hidden">
+        <div class="panel">
+          <div class="panel-head"><h3>Rainfall Data</h3><span class="pill">API data</span></div>
+          <p class="muted">Enter coordinates below and retrieve the latest 30-day historical precipitation plus a 7-day forecast.</p>
+          <div class="form-grid compact">
+            <label>State<select id="reportState"><option value="">Select state</option></select></label>
+            <label>District<select id="reportDistrict" disabled><option value="">Select district</option></select></label>
+            <label>Latitude<input id="reportLat" type="number" step="any"></label>
+            <label>Longitude<input id="reportLon" type="number" step="any"></label>
+          </div>
+          <button id="reportBtn" class="secondary">Refresh Rainfall Data</button>
+          <div id="reportSummary" class="report-summary"></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Date</th><th>Actual rainfall (mm)</th></tr></thead>
+              <tbody id="rainTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-profile" class="page hidden">
+        <div class="panel">
+          <div class="panel-head"><h3>Farmer Profile</h3></div>
+          <div class="profile-box">
+            <div class="avatar large" id="profileAvatar">F</div>
+            <div>
+              <h2 id="profileName">Farmer</h2>
+              <p id="profileEmail" class="muted">email</p>
+            </div>
+          </div>
+          <div class="form-grid">
+            <label>Full name<input id="profileNameInput"></label>
+            <label>State<select id="profileState"><option value="">Select state</option></select></label>
+            <label>District<select id="profileDistrict" disabled><option value="">Select district</option></select></label>
+            <label>Farm location<input id="profileLocationInput" placeholder="Farm name / area"></label><input id="profileLat" type="hidden"><input id="profileLon" type="hidden">
+          </div>
+          <button id="profileSave" class="primary">Save Profile</button>
+        </div>
+      </div>
+    </main>
+  </section>
+
+  <script src="/script.js"></script>
+</body>
+</html>
