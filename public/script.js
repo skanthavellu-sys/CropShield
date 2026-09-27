@@ -88,7 +88,7 @@ $("calculateBtn").addEventListener("click",async()=>{
     const rainfallRisk=rainfallProbabilities(d.historical.totalMm,crop,customRef,d.historical.rolling30DayTotals);
     const risk=riskFromRain(d.historical.totalMm,crop,customRef,d.historical.rolling30DayTotals);
     const insuredAmount=sum;
-    const premium=insuredAmount*(rainfallRisk.belowProbability+rainfallRisk.excessProbability)*1.20;
+    const premium=insuredAmount*(Math.round(rainfallRisk.belowProbability*100)/100+Math.round(rainfallRisk.excessProbability*100)/100)*1.20;
     latestQuote={crop,sumInsured:insuredAmount,premium,risk,droughtProbability:rainfallRisk.belowProbability,excessProbability:rainfallRisk.excessProbability,expectedRainfall:rainfallRisk.expectedMm,rainfall30:d.historical.totalMm,coordinates:d.coordinates,state:$("calcState").value,district:$("calcDistrict").value};
     $("premium").textContent=money(premium);$("riskLevel").textContent=risk.level;$("actual30").textContent=d.historical.totalMm.toFixed(1)+" mm";$("forecast7").textContent=d.forecast.totalMm.toFixed(1)+" mm";$("rainSignal").textContent=risk.signal;$("droughtProbability").textContent=(rainfallRisk.belowProbability*100).toFixed(0)+"%";$("lossProbability").textContent=(rainfallRisk.excessProbability*100).toFixed(0)+"%";$("dataSource").textContent="Open-Meteo API";$("calcResult").classList.remove("hidden");updateDashboard(d,crop);
   }catch(err){$("calcError").textContent=err.message;$("calcError").classList.remove("hidden")}finally{$("calcLoading").classList.add("hidden")}
