@@ -78,7 +78,7 @@ function updateDashboard(data,crop="Padi"){const ref=crop30DayReference[crop]||1
 
 
 $("calculateBtn").addEventListener("click",async()=>{
-  const lat=Number($("#lat").value),lon=Number($("#lon").value),crop=$("#crop").value,sum=Number($("#sumInsured").value);
+  const latInput=document.querySelector("#page-calculator #lat"),lonInput=document.querySelector("#page-calculator #lon"),cropInput=document.querySelector("#page-calculator #crop"),sumInput=document.querySelector("#page-calculator #sumInsured");const lat=Number(latInput.value),lon=Number(lonInput.value),crop=cropInput.value,sum=Number(sumInput.value);
   $("calcError").classList.add("hidden");$("calcLoading").classList.remove("hidden");$("calcResult").classList.add("hidden");
   if(!Number.isFinite(lat)||!Number.isFinite(lon)||lat<-90||lat>90||lon<-180||lon>180){$("calcLoading").classList.add("hidden");$("calcError").textContent="Please select a valid Malaysian state and district.";return $("calcError").classList.remove("hidden")}
   if(!Number.isFinite(sum)||sum<100){$("calcLoading").classList.add("hidden");$("calcError").textContent="Check the sum insured amount.";return $("calcError").classList.remove("hidden")}
