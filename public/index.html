@@ -22,6 +22,7 @@
       <form id="loginForm" class="auth-form">
         <label>Email<input id="loginEmail" type="email" required placeholder="you@example.com"></label>
         <label>Password<input id="loginPassword" type="password" required placeholder="••••••••"></label>
+        
         <button class="primary full">Login</button>
       </form>
 
@@ -29,6 +30,10 @@
         <label>Full name<input id="regName" required placeholder="Farmer name"></label>
         <label>Email<input id="regEmail" type="email" required placeholder="you@example.com"></label>
         <label>Password<input id="regPassword" type="password" minlength="6" required placeholder="At least 6 characters"></label>
+        <small class="password-hint">
+    Password must contain at least 1 uppercase letter, 1 number, and 1 special character.
+  </small>
+</label>
         <label>State<select id="regState" required><option value="">Select state</option></select></label>
         <label>District<select id="regDistrict" required disabled><option value="">Select district</option></select></label>
         <label>Farm location<input id="regLocation" placeholder="Optional farm name / area"></label>
