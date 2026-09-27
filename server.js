@@ -344,8 +344,8 @@ for (let i = 29; i < historicalDaily.length; i++) {
   });
 }
 
-    const actual30 = Number(historicalDaily.reduce((sum, d) => sum + d.mm, 0).toFixed(1));
-    const expected7 = Number(forecastDaily.reduce((sum, d) => sum + d.mm, 0).toFixed(1));
+    const latest30Day = historicalDaily.slice(-30);
+const actual30 = Number(latest30Day.reduce((sum, d) => sum + d.mm, 0).toFixed(1));
 
     res.json({
       source: "Open-Meteo",
@@ -362,7 +362,7 @@ for (let i = 29; i < historicalDaily.length; i++) {
 },
       forecast: {
         days: forecastDaily.length,
-        totalMm: expected7,
+        totalMm: Number(forecastDaily.reduce((sum, d) => sum + d.mm, 0).toFixed(1)),
         daily: forecastDaily
       },
       fetchedAt: new Date().toISOString()
