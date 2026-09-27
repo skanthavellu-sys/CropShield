@@ -140,7 +140,7 @@ async function loadClaims(){try{const d=await api("/api/claims");$("claimsList")
 function updateClaimScreen(){
   if(!$("claimEligibility"))return;
   if(!currentPolicy){$("claimEligibility").className="claim-eligibility not-eligible";$("claimEligibility").textContent="Purchase an active policy before submitting a claim.";$("sensorStatus").textContent="Inactive";return}
-  $("claimCrop").value=currentPolicy.crop||"";
+  
   const expected=Number(currentPolicy.expectedRainfall?.[0]?.expectedMm||currentPolicy.expectedRainfall?.[0]?.expected||currentPolicy.expectedRainfall||0);
   const eligible=expected>0&&0<expected*0.70;
   $("sensorRainfall").textContent="0 mm";$("sensorStatus").textContent="Monitoring";
@@ -149,7 +149,7 @@ function updateClaimScreen(){
 }
 
 $("bankAccountNumber").addEventListener("input",()=>{$("bankAccountNumber").value=$("bankAccountNumber").value.replace(/\D/g,"")});
-$("claimBtn").addEventListener("click",async()=>{try{if(!currentPolicy){throw new Error("Purchase an active insurance policy before submitting a claim.")}await api("/api/claims",{method:"POST",body:JSON.stringify({policyId:currentPolicy.id,crop:$("claimCrop").value,amount:$("claimAmount").value,reason:$("claimReason").value,bankName:$("bankName").value,accountHolderName:$("accountHolderName").value,bankAccountNumber:$("bankAccountNumber").value})});$("claimReason").value="";$("claimAmount").value="";$("bankName").value="";$("accountHolderName").value="";$("bankAccountNumber").value="";toast("Claim submitted successfully.");loadClaims()}catch(err){toast(err.message,false)}});
+$("claimBtn").addEventListener("click",async()=>{try{if(!currentPolicy){throw new Error("Purchase an active insurance policy before submitting a claim.")}await api("/api/claims",{method:"POST",body:JSON.stringify({policyId:currentPolicy.id,crop:$("claimCrop").value,amount:currentPolicy.sumInsured,reason:$("claimReason").value,bankName:$("bankName").value,accountHolderName:$("accountHolderName").value,bankAccountNumber:$("bankAccountNumber").value})});$("claimReason").value="";$("claimAmount").value="";$("bankName").value="";$("accountHolderName").value="";$("bankAccountNumber").value="";toast("Claim submitted successfully.");loadClaims()}catch(err){toast(err.message,false)}});
 
 function loadReportFromCalculator(){if($("calcState").value){setLocationPair("reportState","reportDistrict","reportLat","reportLon",$("calcState").value,$("calcDistrict").value)}else{fillStates("reportState")}if(latestRainfall)renderReport(latestRainfall)}
 function renderReport(d){$("reportSummary").innerHTML=`<div class="report-box"><span>30-day actual</span><strong>${d.historical.totalMm.toFixed(1)} mm</strong></div><div class="report-box"><span>7-day forecast</span><strong>${d.forecast.totalMm.toFixed(1)} mm</strong></div><div class="report-box"><span>Coordinates</span><strong>${d.coordinates.latitude.toFixed(4)}, ${d.coordinates.longitude.toFixed(4)}</strong></div>`;$("rainTable").innerHTML=d.historical.daily.map(x=>`<tr><td>${x.date}</td><td>${x.mm.toFixed(1)} mm</td></tr>`).join("")}
