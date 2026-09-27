@@ -315,8 +315,8 @@ if (cached && Date.now() - cached.timestamp < 60 * 60 * 1000) {
       `&start_date=${startDate}&end_date=${endDate}&daily=precipitation_sum&timezone=Asia%2FKuala_Lumpur`;
 
     const forecastURL =
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-      `&daily=precipitation_sum&forecast_days=7&timezone=Asia%2FKuala_Lumpur`;
+  `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+  `&daily=precipitation_sum&forecast_days=7&timezone=Asia%2FKuala_Lumpur&models=best_match`;
 
     const [historyResp, forecastResp] = await Promise.all([
       fetch(historyURL),
