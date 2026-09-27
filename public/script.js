@@ -96,7 +96,25 @@ $("purchaseBtn").addEventListener("click",async()=>{
   const purchasedAt=new Date();
   const coverageStart=dateOnly(purchasedAt);const coverageEnd=dateOnly(addMonths(purchasedAt,9));
   const expectedRainfall=buildExpectedRainfallSchedule(latestQuote.crop,latestQuote.expectedRainfall,purchasedAt);
-  const policy={id:"CS-"+Date.now().toString().slice(-8),...latestQuote,purchasedAt:purchasedAt.toISOString(),coverageStart,coverageEnd,expectedRainfall,status:"Active"};
+  const policy={
+  policyId:"CS-"+Date.now().toString().slice(-8),
+  crop:String(latestQuote.crop||""),
+  sumInsured:Number(latestQuote.sumInsured),
+  premium:Number(latestQuote.premium),
+  risk:latestQuote.risk||null,
+  droughtProbability:Number(latestQuote.droughtProbability||0),
+  excessProbability:Number(latestQuote.excessProbability||0),
+  
+  rainfall30:Number(latestQuote.rainfall30||0),
+  coordinates:latestQuote.coordinates||null,
+  state:String(latestQuote.state||""),
+  district:String(latestQuote.district||""),
+  purchasedAt:purchasedAt.toISOString(),
+  coverageStart,
+  coverageEnd,
+  expectedRainfall:expectedRainfall,
+  status:"Active"
+};
   const btn=$("purchaseBtn");btn.disabled=true;btn.textContent="Purchasing…";
   try{const d=await api("/api/policies/purchase",{method:"POST",body:JSON.stringify(policy)});currentPolicy=d.policy;toast("Insurance purchased successfully.");renderPolicy();updateClaimScreen();navigate("policy")}catch(err){toast(err.message,false)}finally{btn.disabled=false;btn.textContent="Purchase Insurance"}
 });
