@@ -1,3 +1,4 @@
+
 const { initializeApp, cert } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 
@@ -296,7 +297,7 @@ app.get("/api/rainfall", async (req, res) => {
     const end = new Date(today);
     end.setDate(end.getDate() - 1); // yesterday: avoids incomplete current-day history
     const start = new Date(end);
-    start.setDate(start.getDate() - 29);
+    start.setDate(start.getDate() - 364);
 
     const fmt = d => d.toISOString().slice(0, 10);
     const startDate = fmt(start);
@@ -331,6 +332,18 @@ app.get("/api/rainfall", async (req, res) => {
       mm: Number(forecast.daily.precipitation_sum?.[i] || 0)
     }));
 
+    const rolling30DayTotals = [];
+
+for (let i = 29; i < historicalDaily.length; i++) {
+  const period = historicalDaily.slice(i - 29, i + 1);
+  const total = period.reduce((sum, d) => sum + d.mm, 0);
+
+  rolling30DayTotals.push({
+    endDate: historicalDaily[i].date,
+    totalMm: Number(total.toFixed(1))
+  });
+}
+
     const actual30 = Number(historicalDaily.reduce((sum, d) => sum + d.mm, 0).toFixed(1));
     const expected7 = Number(forecastDaily.reduce((sum, d) => sum + d.mm, 0).toFixed(1));
 
@@ -340,12 +353,13 @@ app.get("/api/rainfall", async (req, res) => {
       note: "Historical rainfall is API weather data for the selected coordinates. It is not a direct rain-gauge measurement.",
       coordinates: { latitude: lat, longitude: lon },
       historical: {
-        startDate,
-        endDate,
-        days: historicalDaily.length,
-        totalMm: actual30,
-        daily: historicalDaily
-      },
+  startDate,
+  endDate,
+  days: historicalDaily.length,
+  totalMm: actual30,
+  daily: historicalDaily,
+  rolling30DayTotals
+},
       forecast: {
         days: forecastDaily.length,
         totalMm: expected7,

@@ -43,22 +43,32 @@ function navigate(page){document.querySelectorAll(".page").forEach(p=>p.classLis
 document.querySelectorAll(".nav-btn").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.page)));
 document.querySelectorAll("[data-page-jump]").forEach(b=>b.addEventListener("click",()=>navigate(b.dataset.pageJump)));
 
-function rainfallProbabilities(actual,crop,customRef,dailyRainfall=[]){
+function rainfallProbabilities(actual,crop,customRef,rolling30DayTotals=[]){
   const ref=crop30DayReference[crop]||customRef||170;
   const ratio=actual/ref;
-  // The formula uses probabilities of the two separate rainfall events.
-  // For this hackathon prototype, probabilities are estimated from the returned
-  // historical daily rainfall observations using the crop's 30-day reference.
-  const expectedDaily=ref/30;
-  const values=Array.isArray(dailyRainfall)&&dailyRainfall.length?dailyRainfall.map(x=>Number(x.mm)).filter(Number.isFinite):[];
-  const sample=values.length?values:[Number(actual)];
-  const belowCount=sample.filter(mm=>mm<expectedDaily*0.70).length;
-  const excessCount=sample.filter(mm=>mm>expectedDaily*1.30).length;
+
+  const periods=Array.isArray(rolling30DayTotals)
+    ? rolling30DayTotals
+        .map(x=>Number(x.totalMm))
+        .filter(Number.isFinite)
+    : [];
+
+  const sample=periods.length?periods:[Number(actual)];
+
+  const belowThreshold=ref*0.70;
+  const excessThreshold=ref*1.30;
+
+  const belowCount=sample.filter(mm=>mm<belowThreshold).length;
+  const excessCount=sample.filter(mm=>mm>excessThreshold).length;
+
   return {
     belowProbability:belowCount/sample.length,
     excessProbability:excessCount/sample.length,
     expectedMm:ref,
-    ratio
+    ratio,
+    sampleSize:sample.length,
+    belowThreshold,
+    excessThreshold
   };
 }
 function riskFromRain(actual,crop,customRef,dailyRainfall=[]){const r=rainfallProbabilities(actual,crop,customRef,dailyRainfall);const p=r.belowProbability+r.excessProbability;if(p>=0.70)return{level:"High",signal:"High rainfall risk",probability:p};if(p>0)return{level:"Medium",signal:"Rainfall trigger probability detected",probability:p};return{level:"Low",signal:"Low rainfall trigger probability",probability:0}}
@@ -75,8 +85,8 @@ $("calculateBtn").addEventListener("click",async()=>{
   if(isOther&&(!crop||!Number.isFinite(customRef)||customRef<=0)){$("calcLoading").classList.add("hidden");$("calcError").textContent="Enter the other crop name and its expected rainfall requirement.";return $("calcError").classList.remove("hidden")}
   try{
     const d=await fetchRainfall(lat,lon);
-    const rainfallRisk=rainfallProbabilities(d.historical.totalMm,crop,customRef,d.historical.daily);
-    const risk=riskFromRain(d.historical.totalMm,crop,customRef,d.historical.daily);
+    const rainfallRisk=rainfallProbabilities(d.historical.totalMm,crop,customRef,d.historical.rolling30DayTotals);
+    const risk=riskFromRain(d.historical.totalMm,crop,customRef,d.historical.rolling30DayTotals);
     const insuredAmount=sum;
     const premium=insuredAmount*(rainfallRisk.belowProbability+rainfallRisk.excessProbability)*1.20;
     latestQuote={crop,sumInsured:insuredAmount,premium,risk,droughtProbability:rainfallRisk.belowProbability,excessProbability:rainfallRisk.excessProbability,expectedRainfall:rainfallRisk.expectedMm,rainfall30:d.historical.totalMm,coordinates:d.coordinates,state:$("calcState").value,district:$("calcDistrict").value};
