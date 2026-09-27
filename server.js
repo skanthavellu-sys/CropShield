@@ -29,6 +29,7 @@ const path = require("path");
 const crypto = require("crypto");
 
 const app = express();
+const rainfallCache = new Map();
 const PORT = process.env.PORT || 3000;
 
 const DATA_DIR = path.join(__dirname, "data");
@@ -287,6 +288,12 @@ app.get("/api/locations", (req, res) => {
 app.get("/api/rainfall", async (req, res) => {
   const lat = Number(req.query.lat);
   const lon = Number(req.query.lon);
+  const cacheKey = `${lat},${lon}`;
+const cached = rainfallCache.get(cacheKey);
+
+if (cached && Date.now() - cached.timestamp < 60 * 60 * 1000) {
+  return res.json(cached.data);
+}
 
   if (!validCoordinate(lat, -90, 90) || !validCoordinate(lon, -180, 180)) {
     return res.status(400).json({ error: "Enter a valid latitude and longitude." });
@@ -350,7 +357,7 @@ for (let i = 29; i < historicalDaily.length; i++) {
     const latest30Day = historicalDaily.slice(-30);
 const actual30 = Number(latest30Day.reduce((sum, d) => sum + d.mm, 0).toFixed(1));
 
-    res.json({
+    const responseData = {
       source: "Open-Meteo",
       sourceType: "historical API + forecast API",
       note: "Historical rainfall is API weather data for the selected coordinates. It is not a direct rain-gauge measurement.",
@@ -369,7 +376,13 @@ const actual30 = Number(latest30Day.reduce((sum, d) => sum + d.mm, 0).toFixed(1)
         daily: forecastDaily
       },
       fetchedAt: new Date().toISOString()
-    });
+    };
+    rainfallCache.set(cacheKey, {
+  timestamp: Date.now(),
+  data: responseData
+});
+
+return res.json(responseData);
   } catch (err) {
     console.error(err);
     res.status(502).json({ error: "Could not retrieve rainfall data right now." });
