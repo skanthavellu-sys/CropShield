@@ -4,7 +4,7 @@ let latestRainfall = null;
 let currentPolicy = null;
 let latestQuote = null;
 
-const crop30DayReference = {"Padi":180,"Rubber":170,"Oil Palm":180,"Banana":160,"Chili":140};
+const crop30DayReference = {"Padi":180,"Groundnut":170,"Sweet Corn":180,"Sweet Potato":160,"Mung Bean":140};
 const $ = id => document.getElementById(id);
 const money = n => "RM " + Number(n).toLocaleString("en-MY",{minimumFractionDigits:2,maximumFractionDigits:2});
 
@@ -75,18 +75,18 @@ function riskFromRain(actual,crop,customRef,dailyRainfall=[]){const r=rainfallPr
 async function fetchRainfall(lat,lon){const d=await api(`/api/rainfall?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`);latestRainfall=d;return d}
 function updateDashboard(data,crop="Padi"){const ref=crop30DayReference[crop]||170;$("dashActual").textContent=data.historical.totalMm.toFixed(1)+" mm";$("dashForecast").textContent=data.forecast.totalMm.toFixed(1)+" mm";const r=riskFromRain(data.historical.totalMm,crop,null,data.historical.daily);$("dashRisk").textContent=r.level;$("dashRiskText").textContent=r.signal;$("dashHistory").textContent=data.historical.totalMm.toFixed(1)+" mm";$("dashProgress").style.width=Math.min(100,Math.max(0,data.historical.totalMm/ref*100))+"%"}
 
-$("crop").addEventListener("change",()=>{const isOther=$("crop").value==="Others";$("otherCropLabel").classList.toggle("hidden",!isOther);$("otherRainfallLabel").classList.toggle("hidden",!isOther)});
+
 
 $("calculateBtn").addEventListener("click",async()=>{
-  const lat=Number($("lat").value),lon=Number($("lon").value),isOther=$("crop").value==="Others",crop=isOther?$("otherCrop").value.trim():$("crop").value,sum=Number($("sumInsured").value),customRef=isOther?Number($("otherRainfall").value):null;
+  const lat=Number($("#lat").value),lon=Number($("#lon").value),crop=$("#crop").value,sum=Number($("#sumInsured").value);
   $("calcError").classList.add("hidden");$("calcLoading").classList.remove("hidden");$("calcResult").classList.add("hidden");
   if(!Number.isFinite(lat)||!Number.isFinite(lon)||lat<-90||lat>90||lon<-180||lon>180){$("calcLoading").classList.add("hidden");$("calcError").textContent="Please select a valid Malaysian state and district.";return $("calcError").classList.remove("hidden")}
   if(!Number.isFinite(sum)||sum<100){$("calcLoading").classList.add("hidden");$("calcError").textContent="Check the sum insured amount.";return $("calcError").classList.remove("hidden")}
-  if(isOther&&(!crop||!Number.isFinite(customRef)||customRef<=0)){$("calcLoading").classList.add("hidden");$("calcError").textContent="Enter the other crop name and its expected rainfall requirement.";return $("calcError").classList.remove("hidden")}
+  
   try{
     const d=await fetchRainfall(lat,lon);
-    const rainfallRisk=rainfallProbabilities(d.historical.totalMm,crop,customRef,d.historical.rolling30DayTotals);
-    const risk=riskFromRain(d.historical.totalMm,crop,customRef,d.historical.rolling30DayTotals);
+    const rainfallRisk=rainfallProbabilities(d.historical.totalMm,crop,crop30DayReference[crop],d.historical.rolling30DayTotals);
+    const risk=riskFromRain(d.historical.totalMm,crop,crop30DayReference[crop],d.historical.rolling30DayTotals);
     const insuredAmount=sum;
     const premium=insuredAmount*(Math.round(rainfallRisk.belowProbability*100)/100+Math.round(rainfallRisk.excessProbability*100)/100)*1.20;
     latestQuote={crop,sumInsured:insuredAmount,premium,risk,droughtProbability:rainfallRisk.belowProbability,excessProbability:rainfallRisk.excessProbability,expectedRainfall:rainfallRisk.expectedMm,rainfall30:d.historical.totalMm,coordinates:d.coordinates,state:$("calcState").value,district:$("calcDistrict").value};
