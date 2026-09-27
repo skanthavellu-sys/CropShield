@@ -317,7 +317,10 @@ app.get("/api/rainfall", async (req, res) => {
     ]);
 
     if (!historyResp.ok) throw new Error("Historical rainfall service returned an error.");
-    if (!forecastResp.ok) throw new Error("Forecast rainfall service returned an error.");
+    if (!forecastResp.ok) {
+  const errorText = await forecastResp.text();
+  throw new Error(`Forecast rainfall service returned ${forecastResp.status}: ${errorText}`);
+}
 
     const history = await historyResp.json();
     const forecast = await forecastResp.json();
